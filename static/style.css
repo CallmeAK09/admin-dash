@@ -1,0 +1,40 @@
+.form-box {
+    width: 30vw;
+    margin: 60px auto;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.home-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.admindash{
+    min-height: 100vh;
+    display: flex;
+}
+.sidebar {
+    min-width: 200px;
+    background-color: #343a40;
+    color: white;
+}
+
+.sidebar a {
+    color: white;
+    padding: 10px;
+    display: block;
+}
+
+.sidebar a:hover {
+    background-color: #495057;
+}
+
+.content {
+    flex-grow: 1;
+    padding: 20px;
+}

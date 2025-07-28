@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Login{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex justify-content-center align-items-center vh-100 bg-dark text-white">
+    <div class="card p-4 shadow-lg rounded-4 bg-secondary text-white" style="width: 100%; max-width: 400px;">
+        <h3 class="text-center mb-3">Admin Login</h3>
+
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="admin_id" class="form-label">Username or Email</label>
+                <input type="text" name="admin_id" id="admin_id" class="form-control bg-dark text-white border-0" placeholder="Enter your admin ID" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="admin_pass" class="form-label">Password</label>
+                <input type="password" name="admin_pass" id="admin_pass" class="form-control bg-dark text-white border-0" placeholder="Enter your password" required>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-light btn-block">Login</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

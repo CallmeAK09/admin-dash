@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex justify-content-center align-items-center bg-dark">
+    <div class="card shadow bg-secondary text-white p-4" style="max-width: 500px; width: 100%;">
+        <h4 class="card-title text-center mb-4">Edit User</h4>
+
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+        <div class="alert alert-success">{{ success }}</div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'myadmin_edit_user' user.id %}">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="username" class="form-label">Username:</label>
+                <input type="text" id="username" name="username" class="form-control"
+                       value="{{ user.username }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">New Password (optional):</label>
+                <input type="password" id="password" name="password" class="form-control">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Update</button>
+            <a href="{% url 'myadmin_users' %}" class="btn btn-light w-100 mt-2">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

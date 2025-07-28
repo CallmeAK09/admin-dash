@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex flex-column bg-dark">
+
+    <div class="d-flex justify-content-end mt-3">
+        <a href="{% url 'admin_logout' %}" class="btn btn-danger btn-sm">Logout</a>
+    </div>
+
+    <div class="d-flex flex-grow-1 justify-content-center align-items-center">
+        <div class="text-center shadow p-4 rounded" style="min-width: 320px;">
+            <h4 class="mb-3 text-white">Welcome, Admin</h4>
+            <a href="{% url 'myadmin_users' %}" class="btn btn-outline-primary btn-sm w-100 mb-2">Show User List</a>
+            <a href="{% url 'myadmin_new_user' %}" class="btn btn-outline-success btn-sm w-100">Add New User</a>
+        </div>
+    </div>
+
+    <!-- Content Display Section -->
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            {% if request.GET.view == 'users' %}
+                {% include 'admin_user_list_include.html' %}
+            {% elif request.GET.view == 'add' %}
+                {% include 'admin_add_user_include.html' %}
+            {% else %}
+                <div class="alert alert-info text-center">
+                    Select an action above to continue.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

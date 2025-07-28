@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Homepage{% endblock %}
+
+{% block content %}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-warning p-3">
+    <div class="container-fluid ">
+        <a class="navbar-brand fs-2" href="{% url 'home' %}"><b>My App</b></a>
+        <a class="btn btn-outline-success" type="button" href="{% url 'logout' %}">logout</a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="home-box">
+        <h1>Hi {{greet}}, {{name}}</h1>
+        <p>This is your homepage</p>
+    </div>
+</div>
+{% endblock %}

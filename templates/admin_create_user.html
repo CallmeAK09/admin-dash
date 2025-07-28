@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add New User{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex justify-content-center align-items-center bg-dark">
+    <div class="card shadow bg-secondary text-white p-4" style="max-width: 500px; width: 100%;">
+        <h3 class="mb-4 text-center">Add New User</h3>
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" name="username" class="form-control" required
+                       value="{{ request.POST.username }}">
+                {% if error.username %}
+                <div class="text-danger mt-1">{{ error.username }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" class="form-control" required
+                       value="{{ request.POST.email }}">
+                {% if error.email %}
+                <div class="text-danger mt-1">{{ error.email }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="password1" class="form-label">Password</label>
+                <input type="password" id="password1" name="password1" class="form-control" required>
+                {% if error.password1 %}
+                <div class="text-danger mt-1">{{ error.password1 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="password2" class="form-label">Confirm Password</label>
+                <input type="password" id="password2" name="password2" class="form-control" required>
+                {% if error.password2 %}
+                <div class="text-danger mt-1">{{ error.password2 }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">Create User</button>
+
+            <a href="{% url 'myadmin_home' %}" class="btn btn-light w-100 mt-2">Back to Dashboard</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
