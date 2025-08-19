@@ -6,6 +6,10 @@ from django.contrib.auth.decorators import login_required
 
 @never_cache
 def signup_view(request):
+
+    if request.user.is_authenticated:
+        return redirect('home')
+    
     error = {
         'username' : '',
         'email' : '',
@@ -59,8 +63,10 @@ def signup_view(request):
 
 @never_cache
 def login_view(request):
-    if request.session:
-        redirect('home')
+    
+    if request.user.is_authenticated:
+        return redirect('home')
+    
     error = ''
     if request.method == 'POST':
         user_id = request.POST.get('user_id')

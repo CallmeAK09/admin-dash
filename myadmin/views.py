@@ -3,6 +3,7 @@ from  django.contrib.auth.models import User
 from django.contrib.auth import login,logout
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 
 # Create your views here.
@@ -41,16 +42,34 @@ def admin_logout_view(request):
     request.session.flush()
     return redirect('myadmin')
 
-# List
-@never_cache
-def admin_user_list_view(request):
-    users = User.objects.filter(is_staff=False)
+# List@never_cache
 
-    return render(request,'admin_user_list.html',{'users':users})
+@never_cache
+@login_required(login_url='myadmin')
+def admin_user_list_view(request):
+    if not request.user.is_superuser:
+        return redirect('myadmin')
+
+    query = request.GET.get('q', '').strip()
+
+    if query:
+        users = User.objects.filter(
+            Q(username__icontains=query) | Q(email__icontains=query),
+            is_superuser=False
+        )
+    else:
+        users = User.objects.filter(is_superuser=False)
+
+    return render(request, 'admin_user_list.html', {'users': users})
 
 # Edit
 @never_cache
+@login_required(login_url='myadmin') 
 def admin_user_edit_view(request, id):
+
+    if not request.user.is_superuser:
+        return redirect('myadmin')
+    
     user = User.objects.filter(id=id, is_superuser=False).first()
     if not user:
         return redirect('myadmin_users')
@@ -82,7 +101,6 @@ def admin_user_edit_view(request, id):
     return render(request, 'admin_edit_user.html', {'user': user,'error': error,})
 
 # Delete
-@never_cache
 def admin_delete_user_view(request, id):
     if request.method=='POST':
         user=User.objects.filter(id=id,is_superuser=False).first()
@@ -93,7 +111,12 @@ def admin_delete_user_view(request, id):
 
 # Create
 @never_cache
+@login_required(login_url='myadmin') 
 def admin_user_create_view(request):
+
+    if not request.user.is_superuser:
+        return redirect('myadmin')
+    
     
     error = {
         'username' : '',
