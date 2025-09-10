@@ -3,7 +3,6 @@ from  django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views import View
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
 # To check admin logged in
