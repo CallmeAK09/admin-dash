@@ -1,101 +1,141 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login,logout,aauthenticate
 from django.contrib.auth.models import User
+from django.views import View
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-from django.contrib.auth.decorators import login_required
 
-@never_cache
-def signup_view(request):
 
-    if request.user.is_authenticated:
-        return redirect('home')
-    
-    error = {
-        'username' : '',
-        'email' : '',
-        'password1' : '',
-        'password2' : '',
-    }
-    has_error= False
-    if request.method == 'POST':
+# Helper to check if user is logged in using session
+def is_user_logged(request):
+    user_id = request.session.get('user_id')
+    if user_id:
+        try:
+            return User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return None
+    return None
+
+
+# Signup
+@method_decorator(never_cache, name='dispatch')
+class SignupView(View):
+    template_name = 'signup.html'
+
+    def get(self, request):
+        if is_user_logged(request):
+            return redirect('home')
+        error = {'username': '', 'email': '', 'password1': '', 'password2': ''}
+        return render(request, self.template_name, {'error': error})
+
+    def post(self, request):
+        if is_user_logged(request):
+            return redirect('home')
+
+        error = {'username': '', 'email': '', 'password1': '', 'password2': ''}
+        has_error = False
+
         username = request.POST.get('username')
         email = request.POST.get('email')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
 
+        # Username validation
         if not username:
             error['username'] = "Enter username."
             has_error = True
         elif len(username) < 3 or len(username) > 8:
             error['username'] = "User name must have 3-8 characters."
             has_error = True
-        elif User.objects.filter(username = username).exists():
-            error['username'] = "User exist."
+        elif User.objects.filter(username=username).exists():
+            error['username'] = "User exists."
             has_error = True
-        elif not email:
+
+        # Email validation
+        if not email:
             error['email'] = "Enter email."
             has_error = True
         elif '@' not in email or '.' not in email:
-            error['email'] = "Enter a vlaid email."
+            error['email'] = "Enter a valid email."
             has_error = True
-        elif User.objects.filter(email = email).exists():
-            error['email'] = "Email exist."
+        elif User.objects.filter(email=email).exists():
+            error['email'] = "Email exists."
             has_error = True
-        elif not password1 :
-            error['password1'] = "Enter passowrd."
+
+        # Password validation
+        if not password1:
+            error['password1'] = "Enter password."
             has_error = True
-        elif len(password1)<6:
-            error['password1'] = "Password lenth is 6."
+        elif len(password1) < 6:
+            error['password1'] = "Password must be at least 6 characters."
             has_error = True
-        elif not password2 :
+
+        if not password2:
             error['password2'] = "Confirm password."
             has_error = True
         elif password1 != password2:
-            error['password2'] = "Passwords not match."
-
+            error['password2'] = "Passwords do not match."
             has_error = True
-        
-        if not has_error:
-            user = User.objects.create_user(username = username , email = email , password = password1)
-            login(request,user)
-            return redirect('home')
-    return render(request,'signup.html',{'error':error})
 
-@never_cache
-def login_view(request):
-    
-    if request.user.is_authenticated:
-        return redirect('home')
-    
-    error = ''
-    if request.method == 'POST':
+        # If no errors → create user and set session
+        if not has_error:
+            user = User.objects.create_user(username=username, email=email, password=password1)
+            request.session['user_id'] = user.id
+            return redirect('home')
+
+        return render(request, self.template_name, {'error': error})
+
+
+# Login
+@method_decorator(never_cache, name='dispatch')
+class LoginView(View):
+    template_name = 'login.html'
+
+    def get(self, request):
+        if is_user_logged(request):
+            return redirect('home')
+        return render(request, self.template_name, {'error': ''})
+
+    def post(self, request):
+        if is_user_logged(request):
+            return redirect('home')
+
+        error = ''
         user_id = request.POST.get('user_id')
         password = request.POST.get('password')
 
         if not user_id or not password:
             error = 'Enter fields.'
         else:
-            user = ( User.objects.filter(username = user_id ).first() or User.objects.filter(email = user_id).first() )
+            # Try finding user by username or email
+            user = (
+                User.objects.filter(username=user_id).first()
+                or User.objects.filter(email=user_id).first()
+            )
 
             if user and user.check_password(password):
-                
-                login(request,user)
+                request.session['user_id'] = user.id
                 return redirect('home')
-            
             else:
-                error = 'No user found Chek username or password'
+                error = 'No user found. Check username or password.'
 
-    return render(request,'login.html',{'error' : error})
+        return render(request, self.template_name, {'error': error})
 
-@never_cache
-@login_required(login_url='login')
-def home_view(request):
-    
-    greet = 'welcome'
-    name = request.user.username
-    return render(request,'index.html',{'greet':greet,'name':name})
 
-@never_cache
-def logout_view(request):
-    logout(request)
-    return redirect('login')
+# Home
+@method_decorator(never_cache, name='dispatch')
+class HomeView(View):
+    def get(self, request):
+        user = is_user_logged(request)
+        if not user:
+            return redirect('login')
+        greet = 'welcome'
+        name = user.username
+        return render(request, 'index.html', {'greet': greet, 'name': name})
+
+
+# Logout
+@method_decorator(never_cache, name='dispatch')
+class LogoutView(View):
+    def get(self, request):
+        request.session.flush()  # safer than just deleting 'user_id'
+        return redirect('login')

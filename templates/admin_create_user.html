@@ -37,14 +37,6 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
-                <label for="password2" class="form-label">Confirm Password</label>
-                <input type="password" id="password2" name="password2" class="form-control" required>
-                {% if error.password2 %}
-                <div class="text-danger mt-1">{{ error.password2 }}</div>
-                {% endif %}
-            </div>
-
             <button type="submit" class="btn btn-success w-100">Create User</button>
 
             <a href="{% url 'myadmin_home' %}" class="btn btn-light w-100 mt-2">Back to Dashboard</a>

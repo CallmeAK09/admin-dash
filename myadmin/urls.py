@@ -15,14 +15,22 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from . import views
+from .views import (
+    AdminLoginView,
+    AdminHomeView,
+    AdminLogoutView,
+    AdminUserListView,
+    AdminEditView,
+    AdminDeleteView,
+    AdminCreateView,
+)
 
 urlpatterns = [
-    path('myadmin/', views.admin_login_view,name='myadmin'),
-    path('myadmin_home/', views.admin_home_view,name='myadmin_home'),
-    path('myadmin_users/', views.admin_user_list_view,name='myadmin_users'),
-    path('myadmin_new_user/', views.admin_user_create_view,name='myadmin_new_user'),
-    path('myadmin_edit_user/<int:id>/', views.admin_user_edit_view,name='myadmin_edit_user'),
-    path('myadmin_delete_user/<int:id>/', views.admin_delete_user_view,name='myadmin_delete_user'),
-    path('admin_logout/', views.admin_logout_view,name='admin_logout'),
+    path('myadmin/', AdminLoginView.as_view(), name='myadmin'),
+    path('myadmin_home/', AdminHomeView.as_view(), name='myadmin_home'),
+    path('myadmin_users/', AdminUserListView.as_view(), name='myadmin_users'),
+    path('myadmin_new_user/', AdminCreateView.as_view(), name='myadmin_new_user'),
+    path('myadmin_edit_user/<int:id>/', AdminEditView.as_view(), name='myadmin_edit_user'),
+    path('myadmin_delete_user/<int:id>/', AdminDeleteView.as_view(), name='myadmin_delete_user'),
+    path('admin_logout/', AdminLogoutView.as_view(), name='admin_logout'),
 ]

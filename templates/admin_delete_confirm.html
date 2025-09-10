@@ -1,0 +1,19 @@
+<!-- templates/admin_confirm_delete.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirm Delete User</title>
+</head>
+<body>
+    <h1>Confirm Delete User</h1>
+    <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Yes, delete</button>
+        <a href="{% url 'myadmin_users' %}">Cancel</a>
+    </form>
+</body>
+</html>

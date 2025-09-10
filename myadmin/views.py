@@ -1,16 +1,40 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 from  django.contrib.auth.models import User
-from django.contrib.auth import login,logout
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
+from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
+# To check admin logged in
+def is_admin_logged_in(request):
+    admin_id = request.session.get('admin_id')
+    if admin_id:
+        try:
+            return User.objects.get(id=admin_id)
+        except User.DoesNotExist:
+            return None
+    return None
+
 
 # Create your views here.
-@never_cache
-def admin_login_view(request):
-    error=''
-    if request.method=='POST':
+@method_decorator(never_cache,name='dispatch')
+class AdminLoginView(View):
+    
+    def get(self,request):
+
+        if is_admin_logged_in(request):
+            return redirect('myadmin_home')
+        
+        return render(request,'admin_login.html')
+
+    def post(self,request):
+        
+        if is_admin_logged_in(request):
+            return redirect('myadmin_home')
+
+        error=''
+
         admin_id = request.POST.get('admin_id').strip()
         admin_pass = request.POST.get('admin_pass').strip()
 
@@ -20,64 +44,78 @@ def admin_login_view(request):
             user = ( User.objects.filter(username = admin_id ).first() or User.objects.filter(email = admin_id).first() )
 
             if user and user.check_password(admin_pass) and user.is_superuser:
-
-                login(request,user)
+                request.session['admin_id'] = user.id
                 return redirect('myadmin_home')
             
             else:
                 error = 'No user found.Check username or password'
-    return render(request,'admin_login.html',{'error':error})
+
+        return render(request,'admin_login.html',{'error':error})
 
 # Home
-@never_cache
-@login_required(login_url='myadmin')
-def admin_home_view(request):
+@method_decorator(never_cache,name='dispatch')
+class AdminHomeView(View):
+
+    def get(self,request):
+
+        if not is_admin_logged_in(request):
+            return redirect('myadmin')
     
-    return render(request,'admin_home.html')
+        return render(request,'admin_home.html')
 
 # Logout
-@never_cache
-def admin_logout_view(request):
-    logout(request)
-    request.session.flush()
-    return redirect('myadmin')
+@method_decorator(never_cache,name='dispatch')
+class AdminLogoutView(View):
 
-# List@never_cache
+    def get(self,request):
+        
+        if 'admin_id' in request.session:
+            del request.session['admin_id']
 
-@never_cache
-@login_required(login_url='myadmin')
-def admin_user_list_view(request):
-    if not request.user.is_superuser:
         return redirect('myadmin')
 
-    query = request.GET.get('q', '').strip()
+# List
+@method_decorator(never_cache,name='dispatch')
+class AdminUserListView(View):
 
-    if query:
-        users = User.objects.filter(
-            Q(username__icontains=query) | Q(email__icontains=query),
-            is_superuser=False
-        )
-    else:
-        users = User.objects.filter(is_superuser=False)
+    def get(self,request):
 
-    return render(request, 'admin_user_list.html', {'users': users})
+        if not is_admin_logged_in(request):
+            return redirect('myadmin')
+        
+        query = request.GET.get('q', '').strip()
+
+        if query:
+            users = User.objects.filter(
+                Q(username__icontains=query) | Q(email__icontains=query),
+                is_superuser=False
+                )
+        else:
+            users = User.objects.filter(is_superuser=False)
+
+        return render(request, 'admin_user_list.html', {'users': users})
 
 # Edit
-@never_cache
-@login_required(login_url='myadmin') 
-def admin_user_edit_view(request, id):
+@method_decorator(never_cache,name='dispatch')
+class AdminEditView(View):
+    def get(self,request,id):
 
-    if not request.user.is_superuser:
-        return redirect('myadmin')
+        if not is_admin_logged_in(request):
+            return redirect('myadmin')
+        
+        user = get_object_or_404(User, id=id, is_superuser=False)
+
+        return render(request, 'admin_edit_user.html', {'user': user,})
     
-    user = User.objects.filter(id=id, is_superuser=False).first()
-    if not user:
-        return redirect('myadmin_users')
+    def post(self,request,id):
 
-    error = ''
-    success = ''
+        if not is_admin_logged_in(request):
+            return redirect('myadmin')
 
-    if request.method == 'POST':
+        user     = get_object_or_404(User, id=id, is_superuser=False)
+
+        error    = ''
+
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
 
@@ -98,77 +136,88 @@ def admin_user_edit_view(request, id):
                 user.save()
                 return redirect('myadmin_users')
 
-    return render(request, 'admin_edit_user.html', {'user': user,'error': error,})
+        return render(request, 'admin_edit_user.html', {'user': user,'error': error,})
 
 # Delete
-def admin_delete_user_view(request, id):
-    if request.method=='POST':
-        user=User.objects.filter(id=id,is_superuser=False).first()
-        if user:
-            user.delete()
+@method_decorator(never_cache,name='dispatch')
+class AdminDeleteView(View):
+    def get(self,request,id):
 
-    return redirect('myadmin_users')
+        if not is_admin_logged_in(request):
+            return redirect('myadmin')
 
-# Create
-@never_cache
-@login_required(login_url='myadmin') 
-def admin_user_create_view(request):
-
-    if not request.user.is_superuser:
-        return redirect('myadmin')
+        user = get_object_or_404(User, id=id, is_superuser=False)
+        
+        return render(request,'admin_delete_confirm.html',{'user':user})
     
-    
-    error = {
-        'username' : '',
-        'email' : '',
-        'password1' : '',
-        'password2' : '',
-    }
-    has_error= False
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
+    def post(self,request, id):
+        if not is_admin_logged_in(request):
+            return redirect('myadmin')
+        
+        user=get_object_or_404(User, id=id,is_superuser=False)
+        user.delete()
 
+        return redirect('myadmin_users')
+    
+# create
+@method_decorator(never_cache, name='dispatch')
+class AdminCreateView(View):
+    def get(self, request):
+
+        if not is_admin_logged_in(request):
+            return redirect('myadmin')
+
+        error = {'username': '', 'email': '', 'password1': ''}
+        return render(request, 'admin_create_user.html', {'error': error})
+
+    def post(self, request):
+
+        admin = is_admin_logged_in(request)
+        if not admin or not admin.is_superuser:
+            return redirect('myadmin')
+
+
+        error = {
+            'username': '',
+            'email': '',
+            'password1': '',
+        }
+        has_error = False
+
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password1 = request.POST.get('password1', '').strip()
+
+        # --- Validation ---
         if not username:
             error['username'] = "Enter username."
             has_error = True
         elif len(username) < 3 or len(username) > 8:
-            error['username'] = "User name must have 3-8 characters."
+            error['username'] = "Username must be 3–8 characters."
             has_error = True
-        elif User.objects.filter(username = username).exists():
-            error['username'] = "User exist."
+        elif User.objects.filter(username=username).exists():
+            error['username'] = "User already exists."
             has_error = True
-        elif not email:
+
+        if not email:
             error['email'] = "Enter email."
             has_error = True
         elif '@' not in email or '.' not in email:
-            error['email'] = "Enter a vlaid email."
+            error['email'] = "Enter a valid email."
             has_error = True
-        elif User.objects.filter(email = email).exists():
-            error['email'] = "Email exist."
+        elif User.objects.filter(email=email).exists():
+            error['email'] = "Email already exists."
             has_error = True
-        elif not password1 :
-            error['password1'] = "Enter passowrd."
-            has_error = True
-        elif len(password1)<6:
-            error['password1'] = "Password lenth is 6."
-            has_error = True
-        elif not password2 :
-            error['password2'] = "Confirm password."
-            has_error = True
-        elif password1 != password2:
-            error['password2'] = "Passwords not match."
-            has_error = True
-        
-        if not has_error:
-            user = User.objects.create_user(username = username , email = email , password = password1)
-            return redirect('myadmin_users')
-        
-    return render(request,'admin_create_user.html',{'error':error})
 
-@never_cache
-def admin_logout_view(request):
-    logout(request)
-    return redirect('myadmin')
+        if not password1:
+            error['password1'] = "Enter password."
+            has_error = True
+        elif len(password1) < 6:
+            error['password1'] = "Password must be at least 6 characters."
+            has_error = True
+
+        if not has_error:
+            User.objects.create_user(username=username, email=email, password=password1)
+            return redirect('myadmin_users')
+
+        return render(request, 'admin_create_user.html', {'error': error})
