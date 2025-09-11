@@ -76,7 +76,7 @@ class SignupView(View):
             error['password2'] = "Passwords do not match."
             has_error = True
 
-        # If no errors → create user and set session
+        
         if not has_error:
             user = User.objects.create_user(username=username, email=email, password=password1)
             request.session['user_id'] = user.id
@@ -106,7 +106,6 @@ class LoginView(View):
         if not user_id or not password:
             error = 'Enter fields.'
         else:
-            # Try finding user by username or email
             user = (
                 User.objects.filter(username=user_id).first()
                 or User.objects.filter(email=user_id).first()
@@ -137,5 +136,5 @@ class HomeView(View):
 @method_decorator(never_cache, name='dispatch')
 class LogoutView(View):
     def get(self, request):
-        request.session.flush()  # safer than just deleting 'user_id'
+        request.session.flush() 
         return redirect('login')
