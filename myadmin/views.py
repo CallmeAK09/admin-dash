@@ -44,6 +44,7 @@ class AdminLoginView(View):
 
             if user and user.check_password(admin_pass) and user.is_superuser:
                 request.session['admin_id'] = user.id
+                request.session.set_expiry(3600)
                 return redirect('myadmin_home')
             
             else:

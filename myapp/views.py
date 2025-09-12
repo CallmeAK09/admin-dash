@@ -80,6 +80,7 @@ class SignupView(View):
         if not has_error:
             user = User.objects.create_user(username=username, email=email, password=password1)
             request.session['user_id'] = user.id
+            request.session.set_expiry(3600)
             return redirect('home')
 
         return render(request, self.template_name, {'error': error})
@@ -113,6 +114,7 @@ class LoginView(View):
 
             if user and user.check_password(password):
                 request.session['user_id'] = user.id
+                request.session.set_expiry(3600)
                 return redirect('home')
             else:
                 error = 'No user found. Check username or password.'
@@ -130,7 +132,6 @@ class HomeView(View):
         greet = 'welcome'
         name = user.username
         return render(request, 'index.html', {'greet': greet, 'name': name})
-
 
 # Logout
 @method_decorator(never_cache, name='dispatch')
