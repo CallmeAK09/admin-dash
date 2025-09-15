@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
+from .signals import manual_signal
 
 
 # Helper to check if user is logged in using session
@@ -115,6 +116,10 @@ class LoginView(View):
             if user and user.check_password(password):
                 request.session['user_id'] = user.id
                 request.session.set_expiry(3600)
+                
+                # custom signaling
+                manual_signal.send(sender = None, user = user)
+                
                 return redirect('home')
             else:
                 error = 'No user found. Check username or password.'
